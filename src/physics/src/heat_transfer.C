@@ -163,7 +163,7 @@ namespace GRINS
 		    // TODO: precompute some terms like:
 		    //   _rho*_Cp*T_phi[i][qp]*(vel_phi[j][qp]*T_grad_phi[j][qp])
 
-		    KTT(i,j) += jac *
+		    KTT(i,j) += jac * context.get_elem_solution_derivative() *
 		      (-_rho*_Cp*T_phi[i][qp]*(U*T_gradphi[j][qp])  // convection term
 		       -_k*(T_gradphi[i][qp]*T_gradphi[j][qp])); // diffusion term
 		  } // end of the inner dof (j) loop
@@ -171,10 +171,10 @@ namespace GRINS
 		// Matrix contributions for the Tu, Tv and Tw couplings (n_T_dofs same as n_u_dofs, n_v_dofs and n_w_dofs)
 		for (unsigned int j=0; j != n_u_dofs; j++)
 		  {
-		    KTu(i,j) += jac*(-_rho*_Cp*T_phi[i][qp]*(vel_phi[j][qp]*grad_T(0)));
-		    KTv(i,j) += jac*(-_rho*_Cp*T_phi[i][qp]*(vel_phi[j][qp]*grad_T(1)));
+		    KTu(i,j) += jac * context.get_elem_solution_derivative()*(-_rho*_Cp*T_phi[i][qp]*(vel_phi[j][qp]*grad_T(0)));
+		    KTv(i,j) += jac * context.get_elem_solution_derivative()*(-_rho*_Cp*T_phi[i][qp]*(vel_phi[j][qp]*grad_T(1)));
 		    if (_dim == 3)
-		      (*KTw)(i,j) += jac*(-_rho*_Cp*T_phi[i][qp]*(vel_phi[j][qp]*grad_T(2)));
+		      (*KTw)(i,j) += jac * context.get_elem_solution_derivative()*(-_rho*_Cp*T_phi[i][qp]*(vel_phi[j][qp]*grad_T(2)));
 		  } // end of the inner dof (j) loop
 
 	      } // end - if (compute_jacobian && context.get_elem_solution_derivative())
@@ -267,14 +267,14 @@ namespace GRINS
 
 	for (unsigned int i = 0; i != n_T_dofs; ++i)
 	  {
-	    F(i) += _rho*_Cp*T_dot*phi[i][qp]*jac;
+	    F(i) -= _rho*_Cp*T_dot*phi[i][qp]*jac;
 
 	    if( compute_jacobian )
               {
                 for (unsigned int j=0; j != n_T_dofs; j++)
                   {
 		    // We're assuming rho, cp are constant w.r.t. T here.
-                    M(i,j) += _rho*_Cp*phi[j][qp]*phi[i][qp]*jac;
+                    M(i,j) -= _rho*_Cp*phi[j][qp]*phi[i][qp]*jac * context.get_elem_solution_rate_derivative();
                   }
               }// End of check on Jacobian
           
