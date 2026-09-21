@@ -69,6 +69,8 @@ namespace GRINS
   {
     context.get_element_fe(_u_var)->get_JxW();
     context.get_element_fe(_u_var)->get_phi();
+
+    context.get_side_fe(_u_var)->get_nothing();
   }
 
   void LinearReaction::element_time_derivative
