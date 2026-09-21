@@ -40,6 +40,7 @@
 #include "libmesh/partitioner.h"
 #include "libmesh/parsed_function.h"
 #include "libmesh/serial_mesh.h"
+#include "libmesh/sparse_matrix.h"
 #include "libmesh/elem.h"
 #include "libmesh/enum_order.h"
 
@@ -120,6 +121,29 @@ namespace GRINS
         bool all_second_order = input("Mesh/all_second_order", false);
         if (all_second_order)
           mesh->all_second_order();
+
+        // If we have a non-conforming or less-conforming mesh whose
+        // solution space uses an extraction/constraint operator, load
+        // the operator.
+        const char * constraint_str = "Mesh/Read/constraint_filename";
+        if (input.have_variable(constraint_str))
+          {
+            const std::string constraint_filename = input(constraint_str, "DIE!");
+
+            auto matrix = libMesh::SparseMatrix<libMesh::Number>::build(mesh->comm());
+            matrix->read(constraint_filename);
+
+            // The Flex IGA standard for projection operator matrices
+            // is the transpose of our standard for constraint
+            // equations.
+            matrix->get_transpose(*matrix);
+            mesh->copy_constraint_rows(*matrix);
+
+            // libMesh should probably update this in
+            // copy_constraint_rows(); once it does this will be a
+            // redundant sweep we can remove.
+            mesh->cache_elem_data();
+          }
       }
 
     // Generate the mesh using built-in libMesh functions
