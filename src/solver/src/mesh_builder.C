@@ -105,6 +105,19 @@ namespace GRINS
     // Read mesh from file
     if( mesh_build_type == "read" )
       {
+        // If we have a non-conforming or less-conforming mesh whose
+        // solution space uses an extraction/constraint operator,
+        // we'll need to load the operator, but we'll also need to
+        // disable renumbering long enough to make sure the operator
+        // indexing and mesh indexing match.
+        const char * constraint_str = "Mesh/Read/constraint_filename";
+
+        const bool have_constraint = input.have_variable(constraint_str);
+
+        const bool old_renumbering = mesh->allow_renumbering();
+        if (have_constraint)
+          mesh->allow_renumbering(false);
+
         // Make sure the user set the filename to read
         if( !input.have_variable("Mesh/Read/filename") )
           libmesh_error_msg("ERROR: Must specify Mesh/Read/filename for reading mesh.");
@@ -122,11 +135,7 @@ namespace GRINS
         if (all_second_order)
           mesh->all_second_order();
 
-        // If we have a non-conforming or less-conforming mesh whose
-        // solution space uses an extraction/constraint operator, load
-        // the operator.
-        const char * constraint_str = "Mesh/Read/constraint_filename";
-        if (input.have_variable(constraint_str))
+        if (have_constraint)
           {
             const std::string constraint_filename = input(constraint_str, "DIE!");
 
@@ -143,6 +152,8 @@ namespace GRINS
             // copy_constraint_rows(); once it does this will be a
             // redundant sweep we can remove.
             mesh->cache_elem_data();
+
+            mesh->allow_renumbering(old_renumbering);
           }
       }
 
