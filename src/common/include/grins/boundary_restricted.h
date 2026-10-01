@@ -56,6 +56,10 @@ namespace GRINS
   private:
     //! List of boundaries on which we want to compute
     std::vector<libMesh::boundary_id_type> _bc_ids;
+
+    //! Identify boundaries by node sets, not just side sets?
+    // Useful for bad mesh files.
+    bool _nodal_sides = false;
   };
 }
 #endif //GRINS_BOUNDARY_RESTRICTED_H
